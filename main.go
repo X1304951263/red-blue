@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"math/rand"
 	"time"
 )
@@ -18,6 +19,10 @@ func main() {
 
 	sampleNum := 1 << 3
 	for i := 0; i < sampleNum; i++ {
+
+		//初始化路牌
+		roadSign := make([]string, 0)
+
 		// 初始化一副扑克牌
 		deck = initializeDeck()
 
@@ -52,13 +57,17 @@ func main() {
 
 			if playerPoints > bankerPoints {
 				playerWin++
+				roadSign = append(roadSign, "闲")
 			} else if bankerPoints > playerPoints {
 				bankerWin++
+				roadSign = append(roadSign, "庄")
 			} else {
 				draw++
+				roadSign = append(roadSign, "和")
 			}
 			totalNums++
 		}
+		printRoadSign(&roadSign)
 		fmt.Println("闲赢:", playerWin, "庄赢:", bankerWin, "和局:", draw, "总局数:", totalNums,
 			"闲赢率:", fmt.Sprintf("%.2f", float64(playerWin)/float64(totalNums)*100),
 			"庄赢率:", fmt.Sprintf("%.2f", float64(bankerWin)/float64(totalNums)*100),
@@ -68,14 +77,47 @@ func main() {
 
 }
 
+func printRoadSign(roadSign *[]string) {
+	n := len(*roadSign)
+	if n%6 > 0 {
+		for i := 0; i < 6-(n%6); i++ {
+			*roadSign = append(*roadSign, "")
+		}
+	}
+
+	res := ""
+	red := color.New(color.FgRed).SprintFunc()
+	blue := color.New(color.FgBlue).SprintFunc()
+	green := color.New(color.FgGreen).SprintFunc()
+	circle := "\u25CF" // 使用黑色圆圈字符
+
+	for i := 0; i < 6; i++ {
+		for j := 0; j < len(*roadSign)/6; j++ {
+			if (*roadSign)[i+j*6] == "庄" {
+				res += red("\x1b[31m" + circle + "\x1b[0m" + " ")
+			} else if (*roadSign)[i+j*6] == "闲" {
+				res += blue("\x1b[94m" + circle + "\x1b[0m" + " ")
+			} else if (*roadSign)[i+j*6] == "和" {
+				res += green("\x1b[92m" + circle + "\x1b[0m" + " ")
+			}
+		}
+		res += "\n"
+	}
+	fmt.Println(res)
+}
+
 func initializeDeck() []Card {
 	suits := []string{"红心", "方块", "梅花", "黑桃"}
-	values := []string{"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
-		"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
-		"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
-		"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
-		"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A",
-		"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"} //6副牌
+	values := []string{
+		"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+		"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+		"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+		"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+		"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+		"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+		"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+		"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+	} //8副牌
 
 	var deck []Card
 
@@ -124,7 +166,7 @@ func dealCard(hand []Card, deck *[]Card, num int) []Card {
 }
 
 func removeDeckHead(deck []Card) []Card {
-	return deck[8:]
+	return deck[11:]
 }
 
 func shouldPlayerDrawThirdCard(playerHand, bankerHand []Card) bool {
@@ -143,9 +185,9 @@ func shouldPlayerDrawThirdCard(playerHand, bankerHand []Card) bool {
 }
 
 func shouldBankerDrawThirdCard(playerHand, bankerHand []Card) bool {
-
+	playerPoints := calculatePoints(playerHand) //闲家点数
 	bankerPoints := calculatePoints(bankerHand) //庄家点数
-	if bankerPoints >= 8 {                      //庄家点数大于8,不能发牌
+	if bankerPoints >= 8 || playerPoints >= 8 { //庄家点数大于8,不能发牌
 		return false
 	}
 
