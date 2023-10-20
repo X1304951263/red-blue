@@ -18,6 +18,9 @@ var m map[string]int
 func main() {
 
 	sampleNum := 1 << 3
+	bannerWinNum := make([]int, 72)
+	playerWinNum := make([]int, 72)
+	drawNum := make([]int, 72)
 	for i := 0; i < sampleNum; i++ {
 
 		//初始化路牌
@@ -35,13 +38,15 @@ func main() {
 		shuffledDeck = removeDeckHead(shuffledDeck)
 
 		totalNums, bankerWin, playerWin, draw := 0, 0, 0, 0
-
+		luckySix := 0
 		for len(shuffledDeck) > 6 {
 			playerCard := make([]Card, 0)
 			bankerCard := make([]Card, 0)
 			// 发牌
-			playerCard = dealCard(playerCard, &shuffledDeck, 2)
-			bankerCard = dealCard(bankerCard, &shuffledDeck, 2)
+			bankerCard = dealCard(bankerCard, &shuffledDeck, 1)
+			playerCard = dealCard(playerCard, &shuffledDeck, 1)
+			bankerCard = dealCard(bankerCard, &shuffledDeck, 1)
+			playerCard = dealCard(playerCard, &shuffledDeck, 1)
 
 			// 根据规则决定是否发第三张牌
 			if shouldPlayerDrawThirdCard(playerCard, bankerCard) { //闲家补牌
@@ -58,22 +63,37 @@ func main() {
 			if playerPoints > bankerPoints {
 				playerWin++
 				roadSign = append(roadSign, "闲")
+				if totalNums < 72 {
+					playerWinNum[totalNums]++
+				}
 			} else if bankerPoints > playerPoints {
 				bankerWin++
 				roadSign = append(roadSign, "庄")
+				if bankerPoints == 6 {
+					luckySix++
+				}
+				if totalNums < 72 {
+					bannerWinNum[totalNums]++
+				}
 			} else {
+				if totalNums < 72 {
+					drawNum[totalNums]++
+				}
 				draw++
 				roadSign = append(roadSign, "和")
 			}
 			totalNums++
+
 		}
 		printRoadSign(&roadSign)
 		fmt.Println("闲赢:", playerWin, "庄赢:", bankerWin, "和局:", draw, "总局数:", totalNums,
 			"闲赢率:", fmt.Sprintf("%.2f", float64(playerWin)/float64(totalNums)*100),
 			"庄赢率:", fmt.Sprintf("%.2f", float64(bankerWin)/float64(totalNums)*100),
-			"和局率:", fmt.Sprintf("%.2f", float64(draw)/float64(totalNums)*100))
-
+			"和局率:", fmt.Sprintf("%.2f", float64(draw)/float64(totalNums)*100), "幸运6:", luckySix)
 	}
+	fmt.Println(bannerWinNum)
+	fmt.Println(playerWinNum)
+	fmt.Println(drawNum)
 
 }
 
